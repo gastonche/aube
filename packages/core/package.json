@@ -1,0 +1,23 @@
+{
+  "name": "@aube/core",
+  "version": "0.0.1",
+  "description": "core package for aube applications",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc index.ts --outDir dist"
+  },
+  "author": "Gaston Che",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "glob": "^10.3.3",
+    "lodash.get": "^4.4.2",
+    "reflect-metadata": "^0.1.13",
+    "typedi": "^0.10.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/lodash.get": "^4.4.7"
+  }
+}
