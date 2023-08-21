@@ -3,4 +3,4 @@ export const ROUTE_DEFINITIONS = Symbol("routes");
 
 export const INJECTABLE_DEFINITIONS = Symbol("Injectable");
 
-export const REQUEST_DEFINITION = Symbol("Request");
+export const getControllerMethodParamInjectorName = (propertyKey: string) => `getters:${propertyKey}`;

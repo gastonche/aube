@@ -1,7 +1,19 @@
 import "reflect-metadata";
-import { CONTROLLER_DEFINITIONS, REQUEST_DEFINITION, ROUTE_DEFINITIONS } from "../constants";
-import { ControllerOptions, RouteOptions } from "./types";
-import { Service, Container } from "../injector";
+import {
+  CONTROLLER_DEFINITIONS,
+  ROUTE_DEFINITIONS,
+  getControllerMethodParamInjectorName,
+} from "../constants";
+import {
+  ControllerOptions,
+  HttpMethodParamDecoratorGetter,
+  RouteOptions,
+} from "./types";
+import { Service } from "../injector";
+import {
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+} from "express";
 
 export function Controller(
   paths: string | string[] = "/",
@@ -22,22 +34,42 @@ function httpMethod(options: RouteOptions): MethodDecorator {
 }
 
 export const Get = (path = "/", options?: Omit<RouteOptions, "method">) =>
-  httpMethod({ ...options, path, method: "GET" });
+  httpMethod({ ...options, path, method: "get" });
 export const Post = (path = "/", options?: Omit<RouteOptions, "method">) =>
-  httpMethod({ ...options, path, method: "POST" });
+  httpMethod({ ...options, path, method: "post" });
 export const Put = (path = "/", options?: Omit<RouteOptions, "method">) =>
-  httpMethod({ ...options, path, method: "PUT" });
+  httpMethod({ ...options, path, method: "put" });
 export const Patch = (path = "/", options?: Omit<RouteOptions, "method">) =>
-  httpMethod({ ...options, path, method: "PATCH" });
+  httpMethod({ ...options, path, method: "patch" });
 export const Delete = (path = "/", options?: Omit<RouteOptions, "method">) =>
-  httpMethod({ ...options, path, method: "DELETE" });
+  httpMethod({ ...options, path, method: "delete" });
 
-export const Request =
-  () => (object: Object, propertyName: string, index?: number) => {
-    Container.registerHandler({
-      object: object as any,
-      propertyName,
-      index,
-      value: () => Reflect.getMetadata(REQUEST_DEFINITION, object),
-    });
+export function createHttpMethodParamValueInjector(
+  getter: HttpMethodParamDecoratorGetter
+): ParameterDecorator {
+  return (target, propertyKey, parameterIndex) => {
+    const key = getControllerMethodParamInjectorName(propertyKey as string);
+    const getters = Reflect.getMetadata(key, target) ?? [];
+    getters[parameterIndex] = getter;
+    Reflect.defineMetadata(key, getters, target);
   };
+}
+
+export const Request = createHttpMethodParamValueInjector((req) => req);
+export const Response = createHttpMethodParamValueInjector((_, res) => res);
+
+export const Body = (key?: string) => {
+  return createHttpMethodParamValueInjector((req) =>
+    key ? req.body[key] : req.body
+  );
+};
+export const Params = (key?: string) => {
+  return createHttpMethodParamValueInjector((req) =>
+    key ? req.params[key] : req.params
+  );
+};
+export const Query = (key?: string) => {
+  return createHttpMethodParamValueInjector((req) =>
+    key ? req.query[key] : req.query
+  );
+};

@@ -1,3 +1,5 @@
+import { Request, Response } from "express";
+
 export interface ControllerOptions {
   path: string | string[];
 }
@@ -8,5 +10,10 @@ export interface Constructable<T = any> {
 
 export interface RouteOptions {
   path: string;
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  method: "get" | "post" | "put" | "patch" | "delete";
 }
+
+export type HttpMethodParamDecoratorGetter = (
+  req: Request,
+  res: Response
+) => void;

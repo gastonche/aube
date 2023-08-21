@@ -1,12 +1,9 @@
-import { Controller, Get, Inject } from "@aube/core";
-import SampleClass from "./sample.class";
+import { Controller, Get, Params } from "@aube/core";
 
 @Controller()
 export default class IndexController {
-    @Inject()
-    sampleClass: SampleClass;
-  @Get("/")
-  home() {
-    return { name: "json" };
+  @Get()
+  home(@Params() params: any) {
+    return { name: "json", params };
   }
 }
