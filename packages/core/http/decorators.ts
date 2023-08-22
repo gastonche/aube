@@ -10,10 +10,6 @@ import {
   RouteOptions,
 } from "./types";
 import { Service } from "../injector";
-import {
-  Request as ExpressRequest,
-  Response as ExpressResponse,
-} from "express";
 
 export function Controller(
   paths: string | string[] = "/",

@@ -8,9 +8,11 @@ export interface Constructable<T = any> {
   new (...params: any[]): T;
 }
 
+export type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
+
 export interface RouteOptions {
   path: string;
-  method: "get" | "post" | "put" | "patch" | "delete";
+  method: HttpMethod;
 }
 
 export type HttpMethodParamDecoratorGetter = (

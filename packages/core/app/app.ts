@@ -1,15 +1,22 @@
 import { config } from "../helpers";
+import { loadFiles } from "../helpers/loader";
 import { HttpServer } from "../http/server";
-import { ApplicationOptions } from "./app.types";
+import Kernel from "./kernel";
+import { ApplicationOptions } from "./types";
 
 const SERVER_STARTED_LABEL = "Server started in";
 
 export default class Application {
-  httpServer: HttpServer = new HttpServer();
+  httpServer: HttpServer;
 
   constructor(options: ApplicationOptions = {}) {
     console.time(SERVER_STARTED_LABEL);
-    this.httpServer.registerControllers();
+    this.httpServer = new HttpServer(this.loadKernel());
+  }
+
+  private loadKernel(): Kernel {
+    const Kernel = loadFiles("app/http/kernel.ts").pop()?.file.default;
+    return new Kernel();
   }
 
   start() {

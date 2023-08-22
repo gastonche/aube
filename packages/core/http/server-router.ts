@@ -13,6 +13,11 @@ import {
 import Container from "typedi";
 import { Logger } from "../logger";
 import { config } from "../helpers";
+import { loadFiles } from "../helpers/loader";
+import Kernel from "../app/kernel";
+import { RouteTable } from "./route-table";
+import { applyMiddlewares } from "./middleware/utils";
+import { createExecuteMethodMiddleware } from "./middleware/execute";
 
 interface RoutesTableRoute {
   controller: string;
@@ -22,82 +27,53 @@ interface RoutesTableRoute {
 
 export default class ServerRouter {
   logger = new Logger(`${config("app.name")} > server router`);
+  table = new RouteTable();
 
-  registerControllers(app: Application, controllers: Constructable[]) {
-    let routeTable: RoutesTableRoute[] = [];
+  constructor(public app: Application, public kernel: Kernel) {
+    this.registerControllers(this.loadControllers());
+  }
+
+  private loadControllers() {
+    return loadFiles("app/http/controllers/**/*.controller.ts").map(
+      ({ file }) => file.default
+    );
+  }
+
+  registerControllers(controllers: Constructable[]) {
     controllers.forEach((controller) => {
       const { paths } = Reflect.getMetadata(CONTROLLER_DEFINITIONS, controller);
       const roots = Array.isArray(paths)
         ? (paths as string[])
         : [paths as string];
-      const { router, routeSpecs } = this.registerController(controller);
-      roots.forEach((path) => app.use(path, router));
-
-      // Add routes for disply on all roots
-      routeTable = routeTable.concat(
-        roots.flatMap((root) =>
-          routeSpecs.map((spec) => ({
-            ...spec,
-            path: join(root, spec.path),
-          }))
-        )
-      );
+      const router = this.registerController(controller, roots);
+      roots.forEach((path) => this.app.use(path, router));
     });
-    console.table(routeTable);
+    this.table.print();
+    this.table.clear();
   }
 
-  private registerController(controller: Constructable) {
+  private registerController(controller: Constructable, roots: string[]) {
     const router = Router();
     const routes: (RouteOptions & { propertyKey: string })[] =
       Reflect.getMetadata(ROUTE_DEFINITIONS, controller) ?? [];
-    const routeSpecs: RoutesTableRoute[] = [];
     routes.forEach((option) => {
-      // Register route for atble display
-      routeSpecs.push({
-        controller: `${controller.name}@${option.propertyKey}`,
-        method: option.method,
-        path: option.path,
-      });
-
+      this.table.registerControllerRoute(roots, option, controller);
       router[option.method](option.path, async (req, res) => {
         try {
-          const result = await this.callMethod(controller, option, req, res);
+          const result = await applyMiddlewares(
+            req,
+            controller,
+            option.propertyKey,
+            ...this.kernel.getMiddlewares(controller, option.propertyKey),
+            createExecuteMethodMiddleware(res)
+          );
           res.send(result);
         } catch (error) {
-          this.logger.error(error);
+          this.logger.trace(error);
           res.status(500).send(error);
         }
       });
     });
-    return { router, routeSpecs };
-  }
-
-  callMethod(
-    controller: Constructable,
-    options: RouteOptions & { propertyKey: string },
-    req: Request,
-    res: Response
-  ) {
-    const getters: HttpMethodParamDecoratorGetter[] =
-      Reflect.getMetadata(
-        getControllerMethodParamInjectorName(options.propertyKey),
-        controller.prototype
-      ) ?? [];
-
-    const params = Reflect.getMetadata(
-      "design:paramtypes",
-      controller.prototype,
-      options.propertyKey
-    ).map((_: unknown, i: number) => getters[i]);
-    if (!params.every(Boolean)) {
-      throw Error(
-        `Can't find injected value for some params of ${options.propertyKey}`
-      );
-    }
-    return Container.get(controller)[options.propertyKey](
-      ...params.map((getter: HttpMethodParamDecoratorGetter) =>
-        getter(req, res)
-      )
-    );
+    return router;
   }
 }

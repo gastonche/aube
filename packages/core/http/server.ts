@@ -1,19 +1,10 @@
 import express from "express";
-import { loadFiles } from "../helpers/loader";
 import ServerRouter from "./server-router";
+import Kernel from "../app/kernel";
 
-export class HttpServer {
-  app = express();
-  router = new ServerRouter();
-
-  private loadControllers() {
-    return loadFiles("app/http/controllers/**/*.controller.ts").map(
-      ({ file }) => file.default
-    );
-  }
-
-  registerControllers() {
-    this.router.registerControllers(this.app, this.loadControllers());
+export class HttpServer extends ServerRouter {
+  constructor(kernel: Kernel) {
+    super(express(), kernel);
   }
 
   listen(port: number, hostname = "") {
