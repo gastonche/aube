@@ -3,7 +3,7 @@ import {
   EXCLUDED_MIDDLEWARE_DEFINITIONS,
   INCLUDED_MIDDLEWARE_DEFINITIONS,
 } from "../../constants";
-import { Constructable, HttpMethod } from "../types";
+import { Constructable } from "../types";
 import { DetailedMiddlewareDefinition, MiddlewareDefinition } from "./types";
 
 export interface MiddlewareMetadata {
@@ -17,7 +17,7 @@ function getMiddlewares(key: symbol) {
     propertyKey?: string | symbol
   ): MiddlewareDefinition[] => {
     const middlewares: MiddlewareMetadata[] =
-      Reflect.getMetadata(key, controller) ?? [];
+      Reflect.getMetadata(key, controller.prototype) ?? [];
     return middlewares
       .filter(
         (middleware) =>
@@ -33,25 +33,3 @@ export const getExcludedMiddlewares = getMiddlewares(
 export const getIncludedMiddlewares = getMiddlewares(
   INCLUDED_MIDDLEWARE_DEFINITIONS
 );
-
-export function applyMiddlewares(
-  request: Request,
-  controller: Constructable,
-  propertyKey: string,
-  ...middlewares: DetailedMiddlewareDefinition[]
-) {
-  async function applyMiddleware(
-    req: Request,
-    index: number
-  ): Promise<unknown> {
-    const { handler: Middleware, value } = middlewares[index];
-    const middleware = new Middleware(controller, propertyKey);
-    return await middleware.handle(
-      req,
-      (req) => applyMiddleware(req, index + 1),
-      value
-    );
-  }
-
-  return applyMiddleware(request, 0);
-}

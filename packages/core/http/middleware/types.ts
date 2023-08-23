@@ -4,7 +4,7 @@ import type { Constructable } from "../types";
 export type MiddlewareNext<T = unknown> = (request: Request) => Promise<T>;
 
 export interface MiddlewareClass {
-  handle: (request: Request, next: MiddlewareNext, value?: unknown) => unknown;
+  handle: (request: Request, next: MiddlewareNext, value: any) => unknown;
   terminate?: (request: Request, response: Response) => void;
 }
 

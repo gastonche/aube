@@ -39,11 +39,12 @@ export default class Kernel implements BaseKernelType {
   ): DetailedMiddlewareDefinition | DetailedMiddlewareDefinition[] {
     if (typeof middleware === "string") {
       const [name, value] = middleware.trim().split(":");
-      if (this.middlewareGroups[name].length) {
+      if (this.middlewareGroups[name]?.length) {
         return this.middlewareGroups[name]
-          .flatMap(this.parseMiddleware)
+          .flatMap(this.parseMiddleware.bind(this))
           .map((m) => ({ ...m, value: m.value ?? value }));
       }
+
       return {
         handler: this.middlewareMapping[name],
         value: value,
@@ -68,19 +69,16 @@ export default class Kernel implements BaseKernelType {
     );
   }
 
-  getMiddlewares(
-    controller: Constructable,
-    propertyKey?: string | symbol
-  ) {
+  getMiddlewares(controller: Constructable, propertyKey?: string | symbol) {
     const excluded = getExcludedMiddlewares(controller, propertyKey).flatMap(
       this.parseMiddleware
     );
     const included = getIncludedMiddlewares(controller, propertyKey).flatMap(
-      this.parseMiddleware
+      this.parseMiddleware.bind(this)
     );
     return [
-        ...this.globalMiddlewares.flatMap(this.parseMiddleware),
-        ...BaseKernel.getFinalMiddlewareList(included, excluded)
+      ...this.globalMiddlewares.flatMap(this.parseMiddleware.bind(this)),
+      ...BaseKernel.getFinalMiddlewareList(included, excluded),
     ];
   }
 }

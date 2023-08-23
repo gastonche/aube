@@ -23,7 +23,7 @@ export function Controller(
 
 function httpMethod(options: RouteOptions): MethodDecorator {
   return (target, propertyKey) => {
-    const routes = Reflect.getMetadata(ROUTE_DEFINITIONS, target) ?? [];
+    const routes = Reflect.getMetadata(ROUTE_DEFINITIONS, target.constructor) ?? [];
     routes.push({ ...options, propertyKey });
     Reflect.defineMetadata(ROUTE_DEFINITIONS, routes, target.constructor);
   };

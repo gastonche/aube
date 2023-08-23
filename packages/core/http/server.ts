@@ -1,15 +1,20 @@
-import express from "express";
-import ServerRouter from "./server-router";
 import Kernel from "../app/kernel";
+import ExpressHttpAdapter from "./adapters/express";
+import RouteConfig from "./config";
 
-export class HttpServer extends ServerRouter {
+export class HttpServer {
+  adapter = new ExpressHttpAdapter();
+  routingConfig: RouteConfig;
+
   constructor(kernel: Kernel) {
-    super(express(), kernel);
+    this.routingConfig = new RouteConfig(kernel);
+    this.adapter.registerControllers(this.routingConfig.registeredControllers);
+    this.routingConfig.printRouteTable();
   }
 
   listen(port: number, hostname = "") {
     return new Promise((resolve) => {
-      const server = this.app.listen(port, hostname, () => {
+      const server = this.adapter.app.listen(port, hostname, () => {
         resolve(server);
       });
     });
