@@ -1,30 +1,37 @@
+import Container from "typedi";
 import { config } from "../helpers";
-import { loadFiles } from "../helpers/loader";
-import { HttpServer } from "../http/server";
-import Kernel from "./kernel";
+import { Constructable } from "../http/types";
+import Kernel from "../kernel";
 import { ApplicationOptions } from "./types";
+import Provider from "../providers/Provider";
 
 const SERVER_STARTED_LABEL = "Server started in";
 
 export default class Application {
-  httpServer: HttpServer;
+  private providers: Provider[] = [];
 
-  constructor(options: ApplicationOptions = {}) {
+  constructor(private options: ApplicationOptions) {
     console.time(SERVER_STARTED_LABEL);
-    this.httpServer = new HttpServer(this.loadKernel());
+    const Kernel = this.getHttpKernel();
+    this.providers = this.initProviders(new Kernel());
   }
 
-  private loadKernel(): Kernel {
-    const Kernel = loadFiles("app/http/kernel.ts").pop()?.file.default;
-    return new Kernel();
+  getHttpKernel() {
+    return Kernel;
+  }
+
+  initProviders(kernel: Kernel) {
+    const providers = config("app.providers", []) as Constructable<Provider>[];
+    return providers.map((Provider) => {
+      const provider = new Provider(kernel, this.options);
+      Container.set(Provider, provider);
+      provider.boot();
+      return provider;
+    });
   }
 
   start() {
-    return this.httpServer
-      .listen(config("app.port"), config("app.host"))
-      .then((res) => {
-        console.timeEnd(SERVER_STARTED_LABEL);
-        return res;
-      });
+    this.providers.forEach((provider) => provider.start?.());
+    console.timeEnd(SERVER_STARTED_LABEL);
   }
 }

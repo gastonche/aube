@@ -23,7 +23,8 @@ export function Controller(
 
 function httpMethod(options: RouteOptions): MethodDecorator {
   return (target, propertyKey) => {
-    const routes = Reflect.getMetadata(ROUTE_DEFINITIONS, target.constructor) ?? [];
+    const routes =
+      Reflect.getMetadata(ROUTE_DEFINITIONS, target.constructor) ?? [];
     routes.push({ ...options, propertyKey });
     Reflect.defineMetadata(ROUTE_DEFINITIONS, routes, target.constructor);
   };
@@ -38,6 +39,10 @@ export const Put = (path = "/", options?: Omit<RouteOptions, "method">) =>
 export const Patch = (path = "/", options?: Omit<RouteOptions, "method">) =>
   httpMethod({ ...options, path, method: "patch" });
 export const Delete = (path = "/", options?: Omit<RouteOptions, "method">) =>
+  httpMethod({ ...options, path, method: "delete" });
+export const All = (path = "/", options?: Omit<RouteOptions, "all">) =>
+  httpMethod({ ...options, path, method: "delete" });
+export const Options = (path = "/", options?: Omit<RouteOptions, "options">) =>
   httpMethod({ ...options, path, method: "delete" });
 
 export function createHttpMethodParamValueInjector(
@@ -54,18 +59,18 @@ export function createHttpMethodParamValueInjector(
 export const Request = createHttpMethodParamValueInjector((req) => req);
 export const Response = createHttpMethodParamValueInjector((_, res) => res);
 
-export const Body = (key?: string) => {
+export const Input = <T = string>(key?: string, defaultValue?: T) => {
   return createHttpMethodParamValueInjector((req) =>
-    key ? req.body[key] : req.body
+    key ? req.input<T>(key, defaultValue) : req.input()
   );
 };
-export const Params = (key?: string) => {
+export const Params = <T = string>(key?: string, defaultValue?: T) => {
   return createHttpMethodParamValueInjector((req) =>
-    key ? req.params[key] : req.params
+    key ? req.params<T>(key, defaultValue) : req.params()
   );
 };
-export const Query = (key?: string) => {
+export const Query = <T = string>(key?: string) => {
   return createHttpMethodParamValueInjector((req) =>
-    key ? req.query[key] : req.query
+    key ? req.query<T>(key) : req.query()
   );
 };

@@ -1,26 +1,30 @@
-import Container from "typedi";
 import { Constructable, HttpMethodParamDecoratorGetter } from "../types";
-import { DetailedMiddlewareDefinition, MiddlewareClass, MiddlewarePrototype } from "./types";
-import { Request, Response } from "express";
+import {
+  DetailedMiddlewareDefinition,
+  MiddlewareClass,
+  MiddlewarePrototype,
+} from "./types";
 import { getControllerMethodParamInjectorName } from "../../constants";
+import { Container } from "../../injector";
+import Request from "../request";
+import Response from "../response";
 
-function createInstantiator(controller: Constructable, propertyKey: string) {
-  return (Middleware: MiddlewarePrototype) => {
-    return new Middleware(controller, propertyKey);
-  };
+function instantiate(Middleware: MiddlewarePrototype) {
+  try {
+    return Container.get(Middleware);
+  } catch (error) {
+    return new Middleware();
+  }
 }
 
 export function applyMiddlewares(
   request: Request,
-  controller: Constructable,
-  propertyKey: string,
   middlewares: DetailedMiddlewareDefinition[]
 ) {
-  const instantiate = createInstantiator(controller, propertyKey);
   async function applyMiddleware(
     req: Request,
     index: number
-  ): Promise<unknown> {
+  ): Promise<ReturnType<MiddlewareClass["handle"]>> {
     const { handler: Middleware, value } = middlewares[index];
     return await instantiate(Middleware).handle(
       req,
@@ -33,51 +37,45 @@ export function applyMiddlewares(
 }
 
 export function terminateMiddleware(
-  controller: Constructable,
-  propertyKey: string,
   req: Request,
   res: Response,
   middlewares: DetailedMiddlewareDefinition[]
 ) {
-  const instantiate = createInstantiator(controller, propertyKey);
   middlewares.forEach(({ handler }) =>
     instantiate(handler).terminate?.(req, res)
   );
 }
 
+export function createExecuteMethodMiddleware(
+  controller: Constructable,
+  propertyKey: string,
+  res: Response
+) {
+  class ExecuteRequestEnpoint implements MiddlewareClass {
+    handle(request: Request) {
+      const getters: HttpMethodParamDecoratorGetter[] =
+        Reflect.getMetadata(
+          getControllerMethodParamInjectorName(propertyKey),
+          controller.prototype
+        ) ?? [];
 
-export function createExecuteMethodMiddleware(res: Response) {
-    class ExecuteRequestEnpoint implements MiddlewareClass {
-      constructor(
-        private controller: Constructable,
-        private propertyKey: string
-      ) {}
-  
-      handle(request: Request) {
-        const getters: HttpMethodParamDecoratorGetter[] =
-          Reflect.getMetadata(
-            getControllerMethodParamInjectorName(this.propertyKey),
-            this.controller.prototype
-          ) ?? [];
-  
-        const params = Reflect.getMetadata(
-          "design:paramtypes",
-          this.controller.prototype,
-          this.propertyKey
-        ).map((_: unknown, i: number) => getters[i]);
-        if (!params.every(Boolean)) {
-          throw Error(
-            `Can't find injected value for some params of ${this.propertyKey}`
-          );
-        }
-        return Container.get(this.controller)[this.propertyKey](
-          ...params.map((getter: HttpMethodParamDecoratorGetter) =>
-            getter(request, res)
-          )
+      const params = Reflect.getMetadata(
+        "design:paramtypes",
+        controller.prototype,
+        propertyKey
+      ).map((_: unknown, i: number) => getters[i]);
+      if (!params.every(Boolean)) {
+        throw Error(
+          `Can't find injected value for some params of ${propertyKey}`
         );
       }
+      return Container.get(controller)[propertyKey](
+        ...params.map((getter: HttpMethodParamDecoratorGetter) =>
+          getter(request, res)
+        )
+      );
     }
-  
-    return { handler: ExecuteRequestEnpoint };
   }
-  
+
+  return { handler: ExecuteRequestEnpoint };
+}

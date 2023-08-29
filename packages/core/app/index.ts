@@ -1,3 +1,3 @@
-export { default as Application } from "./app";
-export { default as BaseKernel } from "./kernel";
+export { default as AubeApplication } from "./app";
 export * from "./types";
+export * from "./errors"

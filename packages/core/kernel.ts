@@ -1,14 +1,13 @@
-import { BaseKernel } from ".";
 import {
   DetailedMiddlewareDefinition,
   MiddlewareDefinition,
   MiddlewarePrototype,
-} from "../http/middleware/types";
+} from "./http/middleware/types";
 import {
   getExcludedMiddlewares,
   getIncludedMiddlewares,
-} from "../http/middleware/utils";
-import { Constructable, HttpMethod } from "../http/types";
+} from "./http/middleware/utils";
+import { Constructable } from "./http/types";
 
 interface BaseKernelType {
   globalMiddlewares: MiddlewareDefinition[];
@@ -44,7 +43,6 @@ export default class Kernel implements BaseKernelType {
           .flatMap(this.parseMiddleware.bind(this))
           .map((m) => ({ ...m, value: m.value ?? value }));
       }
-
       return {
         handler: this.middlewareMapping[name],
         value: value,
@@ -64,8 +62,10 @@ export default class Kernel implements BaseKernelType {
     included: DetailedMiddlewareDefinition[],
     excluded: DetailedMiddlewareDefinition[]
   ) {
-    return included.filter((middleware) =>
-      excluded.every((m) => m.handler !== middleware.handler)
+    return included.filter(
+      (middleware) =>
+        middleware.handler &&
+        excluded.every((m) => m.handler !== middleware.handler)
     );
   }
 
@@ -76,9 +76,12 @@ export default class Kernel implements BaseKernelType {
     const included = getIncludedMiddlewares(controller, propertyKey).flatMap(
       this.parseMiddleware.bind(this)
     );
-    return [
-      ...this.globalMiddlewares.flatMap(this.parseMiddleware.bind(this)),
-      ...BaseKernel.getFinalMiddlewareList(included, excluded),
-    ];
+    return Kernel.getFinalMiddlewareList(
+      [
+        ...this.globalMiddlewares.flatMap(this.parseMiddleware.bind(this)),
+        ...included,
+      ],
+      excluded
+    );
   }
 }

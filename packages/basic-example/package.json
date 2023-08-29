@@ -12,7 +12,8 @@
   "author": "Gaston Che",
   "license": "ISC",
   "dependencies": {
-    "@aube/core": "*"
+    "@aube/core": "*",
+    "@aube/express": "*"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",

@@ -1,18 +1,22 @@
-import { MiddlewareClass, MiddlewareNext } from "@aube/core";
-import { Request, Response } from "express";
-
+import {
+  MiddlewareClass,
+  MiddlewareNext,
+  Request,
+  Response,
+  Service,
+  response,
+} from "@aube/core";
+@Service()
 export default class IpCheckerMiddleware implements MiddlewareClass {
   handle(request: Request, next: MiddlewareNext<unknown>, value: number) {
-    const { ip } = request.query;
-
-    if (ip && +ip === +value) {
+    if (request.query<number>("ip") === value) {
       return next(request);
     }
 
-    return { failed: 1 };
+    return response().redirectTo("/1/name");
   }
 
   terminate(request: Request, response: Response) {
-    console.log("request");
+    console.log(request.path);
   }
 }

@@ -1,14 +1,22 @@
-import type { Request, Response } from "express";
+import Request from "../request";
+import Response from "../response";
 import type { Constructable } from "../types";
 
 export type MiddlewareNext<T = unknown> = (request: Request) => Promise<T>;
 
 export interface MiddlewareClass {
-  handle: (request: Request, next: MiddlewareNext, value: any) => unknown;
+  singleton?: boolean;
+  handle: (
+    request: Request,
+    next: MiddlewareNext,
+    ...value: any[]
+  ) => Promise<any> | any; // TODO: implement multiple midldeware params
   terminate?: (request: Request, response: Response) => void;
 }
 
-export type MiddlewarePrototype = Constructable<MiddlewareClass>;
+export interface MiddlewarePrototype extends Constructable<MiddlewareClass> {
+  singleton?: boolean;
+}
 
 export type DetailedMiddlewareDefinition<T = unknown> = {
   handler: MiddlewarePrototype;
