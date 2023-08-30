@@ -1,3 +1,5 @@
+import { HttpStatusCode } from "../app/errors/messages";
+
 export interface CookieOptions {
   maxAge?: number | undefined;
   signed?: boolean | undefined;
@@ -45,7 +47,7 @@ interface Download {
 
 interface Redirect {
   location: string;
-  status?: number;
+  status?: HttpStatusCode;
 }
 
 type StreamFunction<Body = any> = (
@@ -101,24 +103,24 @@ export default class Response<Res = any, ResBody = any> {
     return this;
   }
 
-  status(status: number) {
+  status(status: HttpStatusCode) {
     this.response.status(status);
-    return status;
+    return this;
   }
 
-  send(body: ResBody, status?: number) {
+  send(body: ResBody, status?: HttpStatusCode) {
     this.body = body;
     status && this.status(status);
     return this;
   }
 
-  json(body: { [k: string | number]: any }, status?: number) {
+  json(body: { [k: string | number]: any }, status?: HttpStatusCode) {
     this.body = body as ResBody;
     status && this.status(status);
     return this;
   }
 
-  jsonp(body: { [k: string | number]: any } | any, status?: number) {
+  jsonp(body: { [k: string | number]: any } | any, status?: HttpStatusCode) {
     this.body = body as ResBody;
     status && this.status(status);
     this.jsonpCallback = true;
@@ -153,15 +155,15 @@ export default class Response<Res = any, ResBody = any> {
     return this;
   }
 
-  redirectTo(location: string, status?: number) {
+  redirectTo(location: string, status?: HttpStatusCode) {
     return (this.redirect = { location, status });
   }
 
-  redirectToRoute(route: string, status: number) {
+  redirectToRoute(route: string, status?: HttpStatusCode) {
     this.redirectTo("", status);
   }
 
-  redirectBack(status?: number) {
+  redirectBack(status?: HttpStatusCode) {
     this.redirectTo("back", status);
   }
 }

@@ -1,6 +1,6 @@
-import { Service, BaseErrorHandler } from "@aube/core";
+import { Singleton, BaseErrorHandler } from "@aube/core";
 
-@Service()
+@Singleton()
 export default class ErrorHandler extends BaseErrorHandler {
-
+  register(): void {}
 }

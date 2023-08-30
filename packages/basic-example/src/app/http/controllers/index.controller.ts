@@ -1,8 +1,8 @@
-import { Controller, Get, Params, Query, WithMiddleware } from "@aube/core";
+import { Controller, Get, Params, Query, WithMiddleware, abort } from "@aube/core";
 
 @Controller()
 export default class IndexController {
-  @WithMiddleware("ip:99")
+  @WithMiddleware("ip:100")
   @Get()
   home(@Query() query: any) {
     return new Promise((resolve) => {
@@ -12,6 +12,6 @@ export default class IndexController {
 
   @Get("/:id/name")
   getParams(@Params() params: any) {
-    return params;
+    return abort(400);
   }
 }

@@ -1,8 +1,4 @@
-import { BaseRouteProvider } from "@aube/core";
-import ErrorHandler from "../app/errors/Handler";
+import { BaseRouteProvider, Singleton } from "@aube/core";
 
-export default class RouteProvider extends BaseRouteProvider {
-  getErrorHandler() {
-    return ErrorHandler;
-  }
-}
+@Singleton()
+export default class RouteProvider extends BaseRouteProvider {}

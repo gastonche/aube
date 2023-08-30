@@ -94,9 +94,8 @@ export default class BaseRouteProvider extends Provider {
       await this.sendResponse(this.createResponse(result), res);
     } catch (e) {
       this.logger.trace(e);
-      const error = this.handleError(e as Error);
-      res.status(error.status);
-      res.send(error);
+      res.status(500);
+      res.send(e);
     }
   }
 
@@ -134,15 +133,6 @@ export default class BaseRouteProvider extends Provider {
     }
 
     return httpRes.send(res.getBody());
-  }
-
-  getErrorHandler() {
-    return ErrorHandler;
-  }
-
-  private handleError(error: Error) {
-    const handler = Container.get(this.getErrorHandler());
-    return handler.handle(error);
   }
 
   boot(): void {

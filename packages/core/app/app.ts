@@ -1,9 +1,10 @@
-import Container from "typedi";
 import { config } from "../helpers";
 import { Constructable } from "../http/types";
-import Kernel from "../kernel";
+import Kernel from "./kernel/kernel";
 import { ApplicationOptions } from "./types";
 import Provider from "../providers/Provider";
+import { Container } from "../injector";
+import HttpKernel from "./kernel/httpKernel";
 
 const SERVER_STARTED_LABEL = "Server started in";
 
@@ -12,19 +13,14 @@ export default class Application {
 
   constructor(private options: ApplicationOptions) {
     console.time(SERVER_STARTED_LABEL);
-    const Kernel = this.getHttpKernel();
-    this.providers = this.initProviders(new Kernel());
-  }
-
-  getHttpKernel() {
-    return Kernel;
+    this.register();
+    this.providers = this.initProviders(Container.get(HttpKernel));
   }
 
   initProviders(kernel: Kernel) {
     const providers = config("app.providers", []) as Constructable<Provider>[];
     return providers.map((Provider) => {
       const provider = new Provider(kernel, this.options);
-      Container.set(Provider, provider);
       provider.boot();
       return provider;
     });
@@ -34,4 +30,6 @@ export default class Application {
     this.providers.forEach((provider) => provider.start?.());
     console.timeEnd(SERVER_STARTED_LABEL);
   }
+
+  protected register() {}
 }

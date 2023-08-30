@@ -9,7 +9,7 @@ import {
   HttpMethodParamDecoratorGetter,
   RouteOptions,
 } from "./types";
-import { Service } from "../injector";
+import { Singleton } from "../injector";
 
 export function Controller(
   paths: string | string[] = "/",
@@ -17,7 +17,7 @@ export function Controller(
 ): ClassDecorator {
   return (target) => {
     Reflect.defineMetadata(CONTROLLER_DEFINITIONS, { paths, options }, target);
-    Service()(target);
+    Singleton()(target);
   };
 }
 

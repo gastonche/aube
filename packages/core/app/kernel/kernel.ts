@@ -2,12 +2,12 @@ import {
   DetailedMiddlewareDefinition,
   MiddlewareDefinition,
   MiddlewarePrototype,
-} from "./http/middleware/types";
+} from "../../http/middleware/types";
 import {
   getExcludedMiddlewares,
   getIncludedMiddlewares,
-} from "./http/middleware/utils";
-import { Constructable } from "./http/types";
+} from "../../http/middleware/utils";
+import { Constructable } from "../../http/types";
 
 interface BaseKernelType {
   globalMiddlewares: MiddlewareDefinition[];

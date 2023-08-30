@@ -17,6 +17,7 @@ export class Logger {
     );
   }
 
+
   log(level: LEVEL, message: unknown) {
     const output = `${
       new Date().toISOString().replace("T", " ").split(".")[0]
