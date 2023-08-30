@@ -1,15 +1,15 @@
 import { Constructable, HttpMethodParamDecoratorGetter } from "../types";
 import {
   DetailedMiddlewareDefinition,
+  MiddlewareInterface,
   MiddlewareClass,
-  MiddlewarePrototype,
 } from "./types";
 import { getControllerMethodParamInjectorName } from "../../constants";
 import { Container } from "../../injector";
 import Request from "../request";
 import Response from "../response";
 
-function instantiate(Middleware: MiddlewarePrototype) {
+function instantiate(Middleware: MiddlewareClass) {
   try {
     return Container.get(Middleware);
   } catch (error) {
@@ -24,7 +24,7 @@ export function applyMiddlewares(
   async function applyMiddleware(
     req: Request,
     index: number
-  ): Promise<ReturnType<MiddlewareClass["handle"]>> {
+  ): Promise<ReturnType<MiddlewareInterface["handle"]>> {
     const { handler: Middleware, value } = middlewares[index];
     return await instantiate(Middleware).handle(
       req,
@@ -51,7 +51,7 @@ export function createExecuteMethodMiddleware(
   propertyKey: string,
   res: Response
 ) {
-  class ExecuteRequestEnpoint implements MiddlewareClass {
+  class ExecuteRequestEnpoint implements MiddlewareInterface {
     handle(request: Request) {
       const getters: HttpMethodParamDecoratorGetter[] =
         Reflect.getMetadata(

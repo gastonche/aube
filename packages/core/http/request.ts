@@ -70,7 +70,13 @@ export default class Request<T = any> {
     return this.request.get(key) ?? defaultValue;
   }
 
+  // TODO: implement properly when cookies are implemented
   cookie(key: string, defaultValue?: string) {
+    return this.request.cookies[key] ?? defaultValue;
+  }
+
+  // TODO: implement properly when sessions are implemented
+  session(key: string, defaultValue?: string) {
     return this.request.cookies[key] ?? defaultValue;
   }
 
@@ -82,18 +88,24 @@ export default class Request<T = any> {
     return names.find(this.accepts);
   }
 
+  input(): HttpRequest["body"];
+  input<T = string>(key: string, defaultValue?: T): T | undefined;
   input<T = string>(name?: string, defaultValue?: T) {
     return name
       ? get(this.request.body, name, defaultValue)
       : this.request.body;
   }
 
+  query(): HttpRequest["query"];
+  query<T = string>(key: string, defaultValue?: T): T | undefined;
   query<T = string>(name?: string, defaultValue?: T) {
     return name
       ? (get(this.request.query, name, defaultValue) as T | undefined)
       : this.request.query;
   }
 
+  params(): HttpRequest["params"];
+  params<T = string>(key: string, defaultValue?: T): T | undefined;
   params<T = string>(name?: string | number, defaultValue?: T) {
     return name || name === 0
       ? (get(this.request.params, name, defaultValue) as T | undefined)

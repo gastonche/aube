@@ -1,16 +1,12 @@
-import { response } from "../../helpers";
-import { MiddlewareClass, MiddlewareNext, Request } from "../../http";
-import AubeError from "./AubeError";
+import { MiddlewareInterface, MiddlewareNext, Request } from "../../http";
 import { getErrorHandler } from "./ErrorHandler";
 
-export default class ErrorHandlerMiddleware implements MiddlewareClass {
+export default class ErrorHandlerMiddleware implements MiddlewareInterface {
   handle(request: Request<any>, next: MiddlewareNext<unknown>) {
     return next(request).catch((error: Error) => {
       const handler = getErrorHandler();
-      handler.handle(error);
-      return error instanceof AubeError
-        ? error.render()
-        : handler.render(error);
+      handler.report(error);
+      return handler.render(error, request);
     });
   }
 }

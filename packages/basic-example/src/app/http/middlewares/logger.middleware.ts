@@ -1,10 +1,10 @@
 import { Request, report, response } from "@aube/core";
 import {
-  MiddlewareClass,
+  MiddlewareInterface,
   MiddlewareNext,
 } from "@aube/core/http/middleware/types";
 
-export default class RequestLoggerMiddleware implements MiddlewareClass {
+export default class RequestLoggerMiddleware implements MiddlewareInterface {
   async handle(request: Request, next: MiddlewareNext) {
     try {
       console.time("Executed");

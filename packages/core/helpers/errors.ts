@@ -7,5 +7,5 @@ export function abort(status: HttpStatusCode, message?: string) {
 }
 
 export function report(error: Error) {
-  getErrorHandler().handle(error);
+  getErrorHandler().report(error);
 }

@@ -4,7 +4,7 @@ import type { Constructable } from "../types";
 
 export type MiddlewareNext<T = unknown> = (request: Request) => Promise<T>;
 
-export interface MiddlewareClass {
+export interface MiddlewareInterface {
   singleton?: boolean;
   handle: (
     request: Request,
@@ -14,15 +14,15 @@ export interface MiddlewareClass {
   terminate?: (request: Request, response: Response) => void;
 }
 
-export interface MiddlewarePrototype extends Constructable<MiddlewareClass> {
+export interface MiddlewareClass extends Constructable<MiddlewareInterface> {
   singleton?: boolean;
 }
 
 export type DetailedMiddlewareDefinition<T = unknown> = {
-  handler: MiddlewarePrototype;
+  handler: MiddlewareClass;
   value?: T;
 };
 export type MiddlewareDefinition =
   | string
-  | MiddlewarePrototype
+  | MiddlewareClass
   | DetailedMiddlewareDefinition;

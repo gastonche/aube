@@ -1,7 +1,7 @@
 import {
   DetailedMiddlewareDefinition,
   MiddlewareDefinition,
-  MiddlewarePrototype,
+  MiddlewareClass,
 } from "../../http/middleware/types";
 import {
   getExcludedMiddlewares,
@@ -12,7 +12,7 @@ import { Constructable } from "../../http/types";
 interface BaseKernelType {
   globalMiddlewares: MiddlewareDefinition[];
   middlewareGroups: Record<string, MiddlewareDefinition[]>;
-  middlewareMapping: Record<string, MiddlewarePrototype>;
+  middlewareMapping: Record<string, MiddlewareClass>;
   middlewarePriority: MiddlewareDefinition[];
 }
 
@@ -25,7 +25,7 @@ export default class Kernel implements BaseKernelType {
     return {};
   }
 
-  get middlewareMapping(): Record<string, MiddlewarePrototype> {
+  get middlewareMapping(): Record<string, MiddlewareClass> {
     return {};
   }
   //   TODO: apply priority as specified;

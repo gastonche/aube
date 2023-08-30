@@ -1,10 +1,33 @@
 import { HttpController, HttpRequest, HttpResponse } from "@aube/core";
-import express, { Router, Request, Response } from "express";
+import express, { Router, type Request, type Response } from "express";
 import { Server } from "http";
 import path from "path";
+import { Options } from "./types";
+import helmet from "helmet";
 
 export default class ExpressHttpAdapter {
-  app = express();
+  public app = express();
+
+  constructor(options?: Options) {
+    this.app = express();
+    this.registerMiddleware(options?.middleware);
+  }
+
+  private registerMiddleware(middleware: Options["middleware"]) {
+    if (middleware?.json !== false) {
+      this.app.use(express.json(middleware?.json));
+    }
+    if (middleware?.static !== false) {
+      const { root = "/public", options = {} } = middleware?.static ?? {};
+      this.app.use(express.static(root, options));
+    }
+    if (middleware?.urlencoded !== false) {
+      this.app.use(express.urlencoded(middleware?.urlencoded));
+    }
+    if (middleware?.helmet !== false) {
+      this.app.use(helmet(middleware?.helmet));
+    }
+  }
 
   private getHttpRequest(request: Request): HttpRequest<Request> {
     return {

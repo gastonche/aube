@@ -1,4 +1,5 @@
 import { response } from "../../helpers";
+import { Request } from "../../http";
 import { Constructable } from "../../http/types";
 import { Container } from "../../injector";
 import { Logger } from "../../logger";
@@ -12,6 +13,10 @@ export default class BaseErrorHandler {
     Constructable<AubeError>,
     (e: AubeError) => boolean
   > = new WeakMap();
+  private renderers: WeakMap<
+    Constructable<AubeError>,
+    (e: AubeError, request: Request) => boolean
+  > = new WeakMap();
 
   protected dontReport: Constructable<AubeError>[] = [];
 
@@ -23,7 +28,7 @@ export default class BaseErrorHandler {
     this.isRegistered = true;
   }
 
-  handle(error: Error) {
+  public report(error: Error) {
     let log: boolean | void = true;
     let context = this.context();
     if (error instanceof AubeError) {
@@ -35,9 +40,8 @@ export default class BaseErrorHandler {
         }
       }
       context = { ...context, ...error.context() };
-    } else {
-      log = this.report(error);
     }
+
     if (log === true || log === undefined) {
       this.logger.error(JSON.stringify({ error, context, stack: error.stack }));
     }
@@ -50,19 +54,28 @@ export default class BaseErrorHandler {
     this.reporters.set(error, fn);
   }
 
+  protected renderable(
+    error: Constructable<AubeError>,
+    fn: (e: AubeError) => boolean
+  ) {
+    this.renderers.set(error, fn);
+  }
+
   protected stopReporting(error: Constructable<AubeError>) {
     this.dontReport.push(error);
   }
 
-  register() {}
-
-  render(error: Error) {
+  public render(error: Error, request: Request) {
+    if (error instanceof AubeError) {
+      if (this.renderers.has(error.prototype)) {
+        return this.renderers.get(error.prototype)?.(error, request);
+      }
+      return error.render();
+    }
     return response(error, 500);
   }
 
-  report(error: Error) {
-    return true;
-  }
+  register() {}
 }
 
 export function getErrorHandler() {

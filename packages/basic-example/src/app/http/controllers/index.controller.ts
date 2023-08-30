@@ -2,7 +2,7 @@ import { Controller, Get, Params, Query, WithMiddleware, abort } from "@aube/cor
 
 @Controller()
 export default class IndexController {
-  @WithMiddleware("ip:100")
+  @WithMiddleware("ip:100", "logger")
   @Get()
   home(@Query() query: any) {
     return new Promise((resolve) => {
