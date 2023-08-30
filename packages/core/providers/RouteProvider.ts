@@ -88,8 +88,6 @@ export default class BaseRouteProvider extends Provider {
     const response = new Response(res);
     Container.set(Response, response);
 
-    console.log(this.kernel.getMiddlewares(controller, route.propertyKey));
-
     const middlewares = [
       ...this.kernel.getMiddlewares(controller, route.propertyKey),
       createExecuteMethodMiddleware(controller, route.propertyKey, response),

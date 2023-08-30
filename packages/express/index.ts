@@ -11,6 +11,7 @@ import path from "path";
 import { Options } from "./types";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import cookieEncrypter from "./encrypter";
 
 export default class ExpressHttpAdapter implements HttpServerAdapterInterface {
   public app = express();
@@ -37,6 +38,7 @@ export default class ExpressHttpAdapter implements HttpServerAdapterInterface {
 
     if (middleware?.cookies !== false) {
       this.app.use(cookieParser(config("app.key"), middleware?.cookies));
+      this.app.use(cookieEncrypter(config("app.key")));
     }
   }
 

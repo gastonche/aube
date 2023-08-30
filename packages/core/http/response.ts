@@ -10,6 +10,7 @@ export interface CookieOptions {
   secure?: boolean | undefined;
   encode?: ((val: string) => string) | undefined;
   sameSite?: boolean | "lax" | "strict" | "none" | undefined;
+  plain?: boolean
 }
 
 export interface Cookie<T = any> {
