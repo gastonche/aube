@@ -1,4 +1,12 @@
-import { Controller, Get, Params, Query, WithMiddleware, abort } from "@aube/core";
+import {
+  Controller,
+  Get,
+  Params,
+  Query,
+  WithMiddleware,
+  request,
+  response,
+} from "@aube/core";
 
 @Controller()
 export default class IndexController {
@@ -12,6 +20,10 @@ export default class IndexController {
 
   @Get("/:id/name")
   getParams(@Params() params: any) {
-    return abort(400);
+    return response({
+      params,
+      cookie: request().cookie("user"),
+      secret: (request().originalRequest as any)?.secret,
+    }).cookie("user", { name: "gaston" });
   }
 }

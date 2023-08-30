@@ -1,11 +1,18 @@
-import { HttpController, HttpRequest, HttpResponse } from "@aube/core";
+import {
+  HttpController,
+  HttpRequest,
+  HttpResponse,
+  HttpServerAdapterInterface,
+  config,
+} from "@aube/core";
 import express, { Router, type Request, type Response } from "express";
 import { Server } from "http";
 import path from "path";
 import { Options } from "./types";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 
-export default class ExpressHttpAdapter {
+export default class ExpressHttpAdapter implements HttpServerAdapterInterface {
   public app = express();
 
   constructor(options?: Options) {
@@ -27,6 +34,10 @@ export default class ExpressHttpAdapter {
     if (middleware?.helmet !== false) {
       this.app.use(helmet(middleware?.helmet));
     }
+
+    if (middleware?.cookies !== false) {
+      this.app.use(cookieParser(config("app.key"), middleware?.cookies));
+    }
   }
 
   private getHttpRequest(request: Request): HttpRequest<Request> {
@@ -44,7 +55,7 @@ export default class ExpressHttpAdapter {
       originalUrl: request.originalUrl,
       params: request.params,
       req: request,
-      cookies: request.cookies,
+      cookies: { ...request.cookies, ...request.signedCookies },
       get: request.get,
       accepts: request.accepts,
     };

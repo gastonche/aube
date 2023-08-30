@@ -70,9 +70,12 @@ export default class Request<T = any> {
     return this.request.get(key) ?? defaultValue;
   }
 
-  // TODO: implement properly when cookies are implemented
-  cookie(key: string, defaultValue?: string) {
-    return this.request.cookies[key] ?? defaultValue;
+  cookie(): HttpRequest["cookies"];
+  cookie<T = string>(key: string, defaultValue?: T): T | undefined;
+  cookie(key?: string, defaultValue?: string) {
+    return key
+      ? this.request.cookies[key] ?? defaultValue
+      : this.request.cookies;
   }
 
   // TODO: implement properly when sessions are implemented

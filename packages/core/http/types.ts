@@ -21,7 +21,7 @@ export interface HttpController {
   prefixes: string[];
 }
 
-export interface HttpServerAdapter {
+export interface HttpServerAdapterInterface {
   registerControllers: (controllers: HttpController[]) => void;
   listen: (port: number, host?: string) => Promise<Server>;
 }

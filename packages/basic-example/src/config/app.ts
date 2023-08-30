@@ -6,5 +6,6 @@ export default {
     name: env("APP_NAME", "Sample App"),
     port: env("PORT", 9001),
     host: env("HOST"),
-    providers: [AppProvider, RouteProvider]
+    providers: [AppProvider, RouteProvider],
+    key: env("APP_KEY")
 }

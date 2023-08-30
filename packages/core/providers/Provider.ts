@@ -1,10 +1,10 @@
 import { BaseKernel } from "../http";
-import { ApplicationOptions } from "../app";
+import { AubeApplication } from "../app";
 
 export default class Provider {
   constructor(
     protected kernel: BaseKernel,
-    protected options: ApplicationOptions
+    protected app: AubeApplication
   ) {}
   boot() {}
   start() {}

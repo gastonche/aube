@@ -5,14 +5,16 @@ import { ApplicationOptions } from "./types";
 import Provider from "../providers/Provider";
 import { Container } from "../injector";
 import HttpKernel from "./kernel/httpKernel";
+import { HttpServerAdapter } from "../http";
 
 const SERVER_STARTED_LABEL = "Server started in";
 
 export default class Application {
   private providers: Provider[] = [];
 
-  constructor(private options: ApplicationOptions) {
+  constructor(public options: ApplicationOptions) {
     console.time(SERVER_STARTED_LABEL);
+    Container.set(HttpServerAdapter, options.adapter);
     this.register();
     this.providers = this.initProviders(Container.get(HttpKernel));
   }

@@ -28,8 +28,8 @@ export default class Kernel implements BaseKernelType {
   get middlewareMapping(): Record<string, MiddlewareClass> {
     return {};
   }
-  //   TODO: apply priority as specified;
-  get middlewarePriority(): MiddlewareDefinition[] {
+
+  get middlewarePriority(): MiddlewareClass[] {
     return [];
   }
 
@@ -69,6 +69,20 @@ export default class Kernel implements BaseKernelType {
     );
   }
 
+  private sorter(
+    a: DetailedMiddlewareDefinition,
+    b: DetailedMiddlewareDefinition
+  ) {
+    const aIndex = this.middlewarePriority.includes(a.handler)
+      ? this.middlewarePriority.indexOf(a.handler)
+      : this.middlewarePriority.length;
+    const bIndex = this.middlewarePriority.includes(b.handler)
+      ? this.middlewarePriority.indexOf(b.handler)
+      : this.middlewarePriority.length;
+
+    return aIndex > bIndex ? 1 : -1;
+  }
+
   getMiddlewares(controller: Constructable, propertyKey?: string | symbol) {
     const excluded = getExcludedMiddlewares(controller, propertyKey).flatMap(
       this.parseMiddleware
@@ -82,6 +96,6 @@ export default class Kernel implements BaseKernelType {
         ...included,
       ],
       excluded
-    );
+    ).sort(this.sorter.bind(this));
   }
 }

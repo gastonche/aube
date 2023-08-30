@@ -25,7 +25,7 @@ export default class HttpKernel extends BaseKernel {
     };
   }
 
-  get middlewarePriority(): MiddlewareDefinition[] {
-    return [];
+  get middlewarePriority(): MiddlewareClass[] {
+    return [ErrorHandlerMiddleware, RequestLoggerMiddleware];
   }
 }

@@ -15,9 +15,14 @@ import {
 import Provider from "./Provider";
 import { Logger } from "../logger";
 import { config, response as createResponse } from "../helpers";
-import { HttpRequest, HttpResponse, Request, Response } from "../http";
-import Container from "typedi";
-import ErrorHandler from "../app/errors/ErrorHandler";
+import {
+  HttpRequest,
+  HttpResponse,
+  HttpServerAdapter,
+  Request,
+  Response,
+} from "../http";
+import { Container } from "../injector";
 
 export default class BaseRouteProvider extends Provider {
   protected controllersDir = "app/http/controllers/";
@@ -83,6 +88,8 @@ export default class BaseRouteProvider extends Provider {
     const response = new Response(res);
     Container.set(Response, response);
 
+    console.log(this.kernel.getMiddlewares(controller, route.propertyKey));
+
     const middlewares = [
       ...this.kernel.getMiddlewares(controller, route.propertyKey),
       createExecuteMethodMiddleware(controller, route.propertyKey, response),
@@ -137,11 +144,16 @@ export default class BaseRouteProvider extends Provider {
 
   boot(): void {
     this.printRouteTable();
-    this.options.adapter.registerControllers(this.registeredControllers);
+    Container.get(HttpServerAdapter).registerControllers(
+      this.registeredControllers
+    );
   }
 
   async start() {
-    await this.options.adapter.listen(config("app.port"), config("app.host"));
+    await Container.get(HttpServerAdapter).listen(
+      config("app.port"),
+      config("app.host")
+    );
     this.logger.log("info", `Server running at port: ${config("app.port")}`);
   }
 }

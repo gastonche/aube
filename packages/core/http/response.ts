@@ -12,6 +12,12 @@ export interface CookieOptions {
   sameSite?: boolean | "lax" | "strict" | "none" | undefined;
 }
 
+export interface Cookie<T = any> {
+  name: string;
+  value: T;
+  options: CookieOptions;
+}
+
 export interface HttpResponse<Res = any, ResBody = any> {
   res: Res;
   headersSent: boolean;
@@ -93,8 +99,38 @@ export default class Response<Res = any, ResBody = any> {
     return this;
   }
 
-  cookie(name: string, value: string | any, options?: CookieOptions) {
-    this.response.setCookie(name, value, options);
+  private ensureCookieIsSigned(options?: CookieOptions) {
+    const opts: CookieOptions = options ?? {};
+    if (options?.signed !== false) {
+      opts.signed = true;
+    }
+    return opts;
+  }
+
+  cookie(cookie: Cookie): Response;
+  cookie(
+    cookie: string,
+    value: string | any,
+    options?: CookieOptions
+  ): Response;
+  cookie(
+    cookie: string | Cookie,
+    value?: string | any,
+    options?: CookieOptions
+  ) {
+    if (typeof cookie === "object") {
+      this.response.setCookie(
+        cookie.name,
+        cookie.value,
+        this.ensureCookieIsSigned(cookie.options)
+      );
+    } else {
+      this.response.setCookie(
+        cookie,
+        value,
+        this.ensureCookieIsSigned(options)
+      );
+    }
     return this;
   }
 
