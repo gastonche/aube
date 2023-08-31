@@ -4,6 +4,7 @@ import {
   MiddlewareDefinition,
   MiddlewareClass,
   Singleton,
+  InitializeSessionMiddleware,
 } from "@aube/core";
 import RequestLoggerMiddleware from "./middlewares/logger.middleware";
 import IpCheckerMiddleware from "./middlewares/ipChecker.middleware";
@@ -11,7 +12,7 @@ import IpCheckerMiddleware from "./middlewares/ipChecker.middleware";
 @Singleton()
 export default class HttpKernel extends BaseKernel {
   get globalMiddlewares(): MiddlewareDefinition[] {
-    return [ErrorHandlerMiddleware];
+    return [ErrorHandlerMiddleware, InitializeSessionMiddleware];
   }
 
   get middlewareGroups(): Record<string, MiddlewareDefinition[]> {
@@ -26,6 +27,10 @@ export default class HttpKernel extends BaseKernel {
   }
 
   get middlewarePriority(): MiddlewareClass[] {
-    return [ErrorHandlerMiddleware, RequestLoggerMiddleware];
+    return [
+      ErrorHandlerMiddleware,
+      InitializeSessionMiddleware,
+      RequestLoggerMiddleware,
+    ];
   }
 }

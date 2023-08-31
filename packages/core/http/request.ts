@@ -1,5 +1,7 @@
 import get from "lodash.get";
 import { Constructable, HttpMethod } from "./types";
+import Session, { HttpSession } from "./session/Session";
+import { session } from "../helpers";
 
 export interface HttpRequest<Req = any> {
   protocol: string;
@@ -25,6 +27,7 @@ export interface HttpRequest<Req = any> {
     [captureGroup: number]: string;
   };
   req: Req;
+  session: HttpSession;
   get(name: string): string | undefined;
   accepts(key: string): boolean | string;
 }
@@ -76,11 +79,6 @@ export default class Request<T = any> {
     return key
       ? this.request.cookies[key] ?? defaultValue
       : this.request.cookies;
-  }
-
-  // TODO: implement properly when sessions are implemented
-  session(key: string, defaultValue?: string) {
-    return this.request.cookies[key] ?? defaultValue;
   }
 
   accepts(names: string | string) {
@@ -187,5 +185,9 @@ export default class Request<T = any> {
         this.request.body[key] = input[key];
       }
     });
+  }
+
+  session(): Session {
+    return session();
   }
 }

@@ -12,11 +12,13 @@ import { Options } from "./types";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import cookieEncrypter from "./encrypter";
+import session from "express-session";
+import SessionStore from "./store";
 
 export default class ExpressHttpAdapter implements HttpServerAdapterInterface {
   public app = express();
 
-  constructor(options?: Options) {
+  constructor(private options?: Options) {
     this.app = express();
     this.registerMiddleware(options?.middleware);
   }
@@ -36,10 +38,27 @@ export default class ExpressHttpAdapter implements HttpServerAdapterInterface {
       this.app.use(helmet(middleware?.helmet));
     }
 
-    if (middleware?.cookies !== false) {
-      this.app.use(cookieParser(config("app.key"), middleware?.cookies));
-      this.app.use(cookieEncrypter(config("app.key")));
+    this.app.use(cookieParser(config("app.key"), middleware?.cookies));
+    this.app.use(cookieEncrypter(config("app.key")));
+
+    const secure = config<boolean>("session.secure");
+    if (secure) {
+      this.app.set("trust proxy", 1);
     }
+    const opts = {
+      secret: config<string>("app.key"),
+      resave: true,
+      saveUninitialized: true,
+      ...this.options?.middleware,
+      store: new SessionStore(),
+      maxAge: config<number>("session.lifetime") * 60,
+      path: config("session.path"),
+      httpOnly: config("session.httpOnly"),
+      domain: config("session.domain"),
+      secure,
+      name: config<string>("session.cookie"),
+    };
+    this.app.use(session(opts));
   }
 
   private getHttpRequest(request: Request): HttpRequest<Request> {
@@ -58,8 +77,9 @@ export default class ExpressHttpAdapter implements HttpServerAdapterInterface {
       params: request.params,
       req: request,
       cookies: { ...request.cookies, ...request.signedCookies },
-      get: request.get,
-      accepts: request.accepts,
+      session: request.session,
+      get: request.get.bind(request),
+      accepts: request.accepts.bind(request),
     };
   }
 
