@@ -1,5 +1,7 @@
 import fs from "fs";
 import path from "path";
+import { config } from "../helpers";
+import { rootPath } from "../helpers/loader";
 
 type LEVEL = "info" | "debug" | "trace" | "warn" | "error" | "fatal";
 
@@ -7,16 +9,20 @@ export class Logger {
   path: string;
   cache: any[] = [];
 
-  constructor(private name: string, dir = "./logs", private cacheSize = 100) {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    this.path = path.join(
+  constructor(
+    private name: string,
+    dir = config<string>("app.logsDir", "storage/logs"),
+    private cacheSize = 100
+  ) {
+    dir = rootPath(dir);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    this.path = rootPath(
       dir,
       `${new Date().toISOString().replace(/:/gi, "-").split(".")[0]}-${
         this.name
       }.log`
     );
   }
-
 
   log(level: LEVEL, message: unknown) {
     const output = `${

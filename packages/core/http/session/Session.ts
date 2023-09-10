@@ -6,20 +6,26 @@ import SessionDriver from "./drivers/SessionDriver";
 import { SessionInterface } from "./types";
 
 type SessionDriverFactory = () => SessionDriver;
+type SessionGetKey = keyof SessionInterface;
+
 export interface HttpSession {
   id: string;
-  [k: string]: any;
-  regenerate(callback: (err: any) => void): this;
 
-  destroy(callback: (err: any) => void): this;
+  cookie: { maxAge?: number };
 
-  reload(callback: (err: any) => void): this;
+  set: <T = any>(key: SessionGetKey, value: T) => void;
 
-  resetMaxAge(): this;
+  get: <T = any>(key: SessionGetKey) => T | undefined;
 
-  save(callback?: (err: any) => void): this;
+  regenerate(callback: (err: any) => void): void;
 
-  touch(): this;
+  destroy(callback: (err: any) => void): void;
+
+  reload(callback: (err: any) => void): void;
+
+  save(callback?: (err: any) => void): void;
+
+  touch(): void;
 }
 
 const noop = () => {};
@@ -29,19 +35,19 @@ const sessionDrivers: Record<string, SessionDriverFactory> = {};
 export default class Session implements Omit<SessionInterface, "payload"> {
   private session: HttpSession;
   constructor(req: Request) {
-    this.session = req.originalRequest.session;
-    this.session.ip = req.ip;
-    this.session.user_agent = req.header("user-agent");
-    this.session.last_activity = Date.now();
-    if (!this.session.payload) this.session.payload = {};
+    this.session = req.httpSession;
+    this.session.set("userAgent", req.header("user-agent"));
+    this.session.set("lastActivity", Date.now());
+    this.session.set("ip", req.ip);
+    this.session.set("payload", this.session.get("payload") ?? {});
   }
 
   get<T>(key: string, defaultValue?: T) {
-    return this.session.payload[key] ?? defaultValue;
+    return this.session.get("payload")?.[key] ?? defaultValue;
   }
 
   all() {
-    return this.session.payload;
+    return this.session.get("payload");
   }
 
   has(key: string) {
@@ -53,12 +59,14 @@ export default class Session implements Omit<SessionInterface, "payload"> {
   }
 
   forget(key: string) {
-    delete this.session.payload[key];
+    const payload = this.all() ?? {};
+    delete payload[key];
+    this.session.set("payload", payload);
     return this;
   }
 
   flush() {
-    this.session.payload = {};
+    this.session.set("payload", {});
     return this;
   }
 
@@ -68,7 +76,8 @@ export default class Session implements Omit<SessionInterface, "payload"> {
   }
 
   set(key: string, value: any) {
-    this.session.payload[key] = value;
+    const payload = { ...this.get(key), [key]: value };
+    this.session.set("payload", payload);
     return this;
   }
 
@@ -76,16 +85,16 @@ export default class Session implements Omit<SessionInterface, "payload"> {
     return this.session.id;
   }
 
-  get ip_address() {
-    return this.session.ip_address;
+  get ip() {
+    return this.session.get("ip");
   }
 
-  get user_agent() {
-    return this.session.user_agent;
+  get userAgent() {
+    return this.session.get("userAgent");
   }
 
-  get last_activity() {
-    return this.session.user_agent;
+  get lastActivity() {
+    return this.session.get("lastActivity");
   }
 
   regenerate(callback: (err: any) => void = noop) {
@@ -98,18 +107,13 @@ export default class Session implements Omit<SessionInterface, "payload"> {
     this.regenerate(callback);
   }
 
-  destroy(callback: (err: any) => void = noop) {
-    this.session.destroy(callback);
-    return this;
-  }
-
   reload(callback: (err: any) => void = noop) {
     this.session.reload(callback);
     return this;
   }
 
   resetMaxAge() {
-    this.session.resetMaxAge();
+    this.session.cookie.maxAge = config<number>("session.lifetime") * 60;
     return this;
   }
 

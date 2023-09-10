@@ -7,5 +7,6 @@ export default {
     port: env("PORT", 9001),
     host: env("HOST"),
     providers: [AppProvider, RouteProvider],
-    key: env("APP_KEY")
+    key: env("APP_KEY"),
+    logsDir: "storage/logs"
 }

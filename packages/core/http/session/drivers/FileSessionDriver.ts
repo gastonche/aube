@@ -1,89 +1,77 @@
 import SessionDriver from "./SessionDriver";
-import { join } from "path";
-import { readFileSync, unlinkSync, writeFileSync, rmSync } from "fs";
+import { readFile, unlink, writeFile, rmdir } from "fs/promises";
+import { existsSync, mkdirSync } from "fs";
 import { SessionInterface } from "../types";
 import { config } from "../../../helpers";
+import { rootPath } from "../../../helpers/loader";
 
 export default class FileSessionDriver extends SessionDriver {
-  private getPath(id: string) {
-    return join(config("session.files"), `${id}.session`);
+  private getPath(id?: string) {
+    return rootPath(config("session.files"), id ? `${id}.session` : "");
   }
 
   private readFile<T extends Object = SessionInterface>(
     id: string
-  ): T | undefined {
-    try {
-      const file = readFileSync(this.getPath(id)).toString();
-      if (file) {
-        return JSON.parse(file);
-      }
-    } catch (e) {}
-
-    return undefined;
+  ): Promise<T | undefined> {
+    return readFile(this.getPath(id))
+      .then((file) => JSON.parse(file.toString()))
+      .catch(() => undefined);
   }
 
   private writeFile<T extends object>(id: string, data: T) {
-    writeFileSync(this.getPath(id), JSON.stringify(data, undefined, 4));
+    if (!existsSync(this.getPath())) {
+      try {
+        mkdirSync(this.getPath(), { recursive: true });
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }
+    return writeFile(this.getPath(id), JSON.stringify(data, undefined, 4));
   }
 
-  private loadAllFile(): Record<string, boolean> {
-    return this.readFile<Record<string, boolean>>("all") ?? {};
+  private loadAllFile(): Promise<Record<string, boolean>> {
+    return this.readFile<Record<string, boolean>>("all").then(file => file ?? {});
   }
 
   private writeAllFile(data: Record<string, boolean>): void {
     this.writeFile("all", data);
   }
 
-  private toPromise<T>(fn: () => T) {
-    try {
-      return Promise.resolve(fn());
-    } catch (e) {
-      console.log(e);
-      return Promise.reject(e);
-    }
-  }
-
   all() {
-    return this.toPromise(() => {
-      const sessions = this.loadAllFile();
-      return Promise.resolve(
-        Object.keys(sessions)
-          .map((id) => this.readFile(id))
-          .filter(Boolean) as SessionInterface[]
-      );
-    });
+    return this.loadAllFile()
+      .then((sessions) =>
+        Promise.all(Object.keys(sessions).map((id) => this.readFile(id)))
+      )
+      .then((sessions) => sessions.filter(Boolean) as SessionInterface[]);
   }
 
   get(id: string) {
-    return this.toPromise(() => this.readFile(id));
+    return this.readFile(id);
   }
 
   destroy(id: string) {
-    return this.toPromise(() => {
-      unlinkSync(this.getPath(id));
-      const sessions = this.loadAllFile();
-      delete sessions[id];
-      this.writeAllFile(sessions);
-      return Promise.resolve();
-    });
+    return unlink(this.getPath(id))
+      .then(this.loadAllFile)
+      .then((sessions) => {
+        delete sessions[id];
+        return this.writeAllFile(sessions);
+      });
   }
 
   clear() {
-    return this.toPromise(() => {
-      rmSync(config("session.files"), { recursive: true, force: true });
-    });
+    return rmdir(this.getPath());
   }
 
   length() {
-    return this.toPromise(() => Object.keys(this.loadAllFile()).length);
+    return this.loadAllFile().then(file => Object.keys(file).length)
   }
 
   set(id: string, value: SessionInterface) {
-    return this.toPromise(() => {
-      this.writeFile(id, value);
-      const sessions = this.loadAllFile();
-      sessions[id] = true;
-      this.writeAllFile(sessions);
-    });
+    return this.writeFile(id, value)
+      .then(this.loadAllFile.bind(this))
+      .then((sessions) => {
+        sessions[id] = true;
+        return this.writeAllFile(sessions);
+      });
   }
 }

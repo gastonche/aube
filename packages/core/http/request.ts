@@ -65,6 +65,10 @@ export default class Request<T = any> {
     return this.request.req;
   }
 
+  get httpSession() {
+    return this.request.session;
+  }
+
   get httpAction(): HttpAction {
     return [this.action[0], this.action[1]];
   }

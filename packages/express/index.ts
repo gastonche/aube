@@ -77,7 +77,29 @@ export default class ExpressHttpAdapter implements HttpServerAdapterInterface {
       params: request.params,
       req: request,
       cookies: { ...request.cookies, ...request.signedCookies },
-      session: request.session,
+      session: {
+        id: request.session.id,
+        cookie: request.session.cookie,
+        get: (key) => (request.session as any)?.[key],
+        set: (key, value) => {
+          (request.session as any)[key] = value;
+        },
+        regenerate(cb) {
+          request.session.regenerate(cb);
+        },
+        destroy(cb) {
+          request.session.destroy(cb);
+        },
+        reload(cb) {
+          request.session.reload(cb);
+        },
+        touch() {
+          request.session.touch();
+        },
+        save(cb) {
+          request.session.save(cb);
+        },
+      },
       get: request.get.bind(request),
       accepts: request.accepts.bind(request),
     };

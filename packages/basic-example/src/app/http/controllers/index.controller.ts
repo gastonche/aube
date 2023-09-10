@@ -6,6 +6,7 @@ import {
   WithMiddleware,
   request,
   response,
+  session,
 } from "@aube/core";
 
 @Controller()
@@ -20,7 +21,8 @@ export default class IndexController {
 
   @Get("/:id/name")
   getParams(@Params() params: any) {
-    request().session().set("person", ["master"]).set("carlio", "name");
+    session().flush();
+    // request().session().set("person", ["master"]).set("carlio", "name");
     return response({
       params,
       cookie: request().cookie("user"),
